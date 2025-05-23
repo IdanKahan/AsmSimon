@@ -38,6 +38,7 @@ DATASEG
 	;Counters:
 	currentGameLevel db 0
 	countButtonsUserPlayed db 0
+	
 	;Booleans
 	isGameOver db 0
 	
@@ -45,46 +46,9 @@ DATASEG
     Line1Msg db 'ITS YOUR TURN!'
     Line2Msg db 'Level: '
 	
-	;color order: yellow,blue,green,red
+;color order: yellow,blue,green,red
 CODESEG
 
-
-
-proc CloseFile
-    mov ah, 3Eh
-    mov bx, [filehandle]
-    int 21h
-    ret
-endp CloseFile
-
-proc DisplayBMPProc
-    push dx ; Already doing this for the filename
-
-    ; --- Save registers ---
-    push bx
-    push di
-    push si 
-    push cx 
-
-    call OpenFile
-
-    call ReadHeader
-    call ReadPalette
-    call CopyPal
-    call CopyBitmap
-
-    call CloseFile
-
-    ; --- Restore registers before returning ---
-    pop cx
-    pop si
-    pop di
-    pop bx
-    pop dx
-    clc      
-    ret
-
-endp DisplayBMPProc
 
 
 proc OpenFile
@@ -161,6 +125,44 @@ PrintBMPLoop:
     loop PrintBMPLoop
     ret
 endp CopyBitmap
+
+proc CloseFile
+    mov ah, 3Eh
+    mov bx, [filehandle]
+    int 21h
+    ret
+endp CloseFile
+
+proc DisplayBMPProc
+    push dx ; Already doing this for the filename
+
+    ; --- Save registers ---
+    push bx
+    push di
+    push si 
+    push cx 
+
+    call OpenFile
+
+    call ReadHeader
+    call ReadPalette
+    call CopyPal
+    call CopyBitmap
+
+    call CloseFile
+
+    ; --- Restore registers before returning ---
+    pop cx
+    pop si
+    pop di
+    pop bx
+    pop dx
+    clc      
+    ret
+
+endp DisplayBMPProc
+
+
 
 proc ShowDefaultImage
 	mov dx, offset defaultPic
@@ -278,11 +280,11 @@ proc CompareGameAndPlayerArr
     add di, bx                  ; point di to randomGameButtons[index]
 
     ; Compare the buttons
-    mov al, [si]                ; al = user's button value (e.g., 0, 1, 2, or 3)
+    mov al, [si]                ; al = user's button value (0, 1, 2, or 3)
     cmp [di], al                ; Compare with the game's value at this position
     jne SetGameOver          
 
-    ; If we reach here, the player was correct 
+    ; If we reach here the player was correct 
     ret        
 
 SetGameOver:
