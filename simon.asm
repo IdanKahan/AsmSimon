@@ -46,7 +46,6 @@ DATASEG
     Line1Msg db 'ITS YOUR TURN!'
     Line2Msg db 'Level: '
 	
-;color order: yellow,blue,green,red
 CODESEG
 
 
@@ -201,23 +200,21 @@ endp Timer
 proc PlaySound
     ; Enable the speaker
     in al, 61h
-    or al, 00000011b    ; Enable the speaker
+    or al, 00000011b
     out 61h, al
 
-    ; Send the frequency value from AX to the PIT (Programmable Interval Timer)
     mov al, 0B6h
-    out 43h, al         ; Select channel 2 of PIT for square wave output
+    out 43h, al
 
-    ; Set the frequency using AX (AL is the low byte, AH is the high byte)
-    out 42h, al         ; Send the low byte of frequency
+    out 42h, al
     mov al, ah
-    out 42h, al         ; Send the high byte of frequency
+    out 42h, al
 
-    call Timer          ; Call the Timer to control the sound duration
+    call Timer
 
     ; Disable the speaker after the sound finishes
     in al, 61h
-    and al, 11111100b    ; Disable the speaker
+    and al, 11111100b
     out 61h, al
 
     ret
@@ -226,9 +223,13 @@ endp PlaySound
 
 
 
-	;color order: yellow,blue,green,red
 
-;Displays all the previous buttons that are stored in the array plus the new one
+;Displays all the previous buttons that are stored in the games button array plus the new one
+;yellow  = 0 (W key)
+;blue    = 1 (A key)
+;green   = 2 (D key)
+;red     = 3 (S key)
+
 proc PlayColors
     mov di, offset randomGameButtons
     mov bl, 0                   
@@ -315,55 +316,54 @@ proc FillRandomButtons
     push bx
     push cx
     push dx
-    push di          ; Save DI since we'll use it
+    push di          
     push si
     push es
 
-    ; Initialize Seed using timer and code address
+    ; Use timer and code address to make a random seed
     mov ax, 40h
     mov es, ax
     mov bx, [clock]
-    mov di, offset FillRandomButtons ; Use DI as the code segment read pointer
-    add bx, di       ; Mix initial seed with code address
+    mov di, offset FillRandomButtons
+    add bx, di
 
-    ; LCG Constants (example values)
-    mov ax, 25173    ; Multiplier
-    mov cx, 13849    ; Increment
+    mov ax, 25173    ; Random math numbers for more randomness
+    mov cx, 13849
 
     mov si, offset randomGameButtons
-    push cx          ; Save Increment for loop use
-    mov cx, 10       ; Generate 10 numbers
+    push cx
+    mov cx, 10       ; Make 10 random numbers
 
 FillLoop:
-    ; Generate next LCG state (BX holds current seed)
-    mul bx           ; DX:AX = Multiplier * Seed
-    pop bx           ; Retrieve Increment
-    add ax, bx       ; Add increment -> AX = New LCG Seed
-    push bx          ; Save Increment back
-    mov bx, ax       ; Update seed for next iteration
+    ; Make next random number
+    mul bx
+    pop bx
+    add ax, bx
+    push bx
+    mov bx, ax
 
-    ; Mix LCG state (BX) with current timer (AX) and a code byte (DL)
+    ; Mix with timer and code
     mov ax, [clock]
-    mov dl, [byte cs:di] ; Read byte from code segment using DI offset (Corrected)
-    inc di           ; Advance code read pointer
+    mov dl, [byte cs:di]
+    inc di
 
-    xor bx, ax       ; Mix seed with timer
-    rol bx, 5        ; Rotate the result
-    xor bl, dl       ; Mix low byte with code byte
+    xor bx, ax
+    rol bx, 5
+    xor bl, dl
 
-    ; Extract output 0-3 from high bits of final mixed value in BX
+    ; Get a number 0-3
     mov ax, bx
     shr ax, 14
     and al, 00000011b
 
-    mov [si], al     ; Store result
+    mov [si], al     ; Store in array
     inc si
     loop FillLoop
 
-    pop cx           ; Clean stack
+    pop cx
     pop es
     pop si
-    pop di           ; Restore DI
+    pop di
     pop dx
     pop cx
     pop bx
@@ -451,7 +451,6 @@ PrintLine1Loop:
     mov ah, 02h     ; Set Cursor Position
     int 10h
 
-    ; --- Print "Level: " ---
     mov si, offset Line2Msg
     mov cx, 7       ; Length of "Level: "
 PrintLine2Loop:
@@ -647,6 +646,3 @@ exit:
     int 21h
 
 END start
-
-
-
